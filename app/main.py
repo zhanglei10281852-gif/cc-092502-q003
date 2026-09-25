@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 
 from app.database import close_connection, connection, init_db
+from app.dating.router import router as dating_router
+from app.dating.service import DatingError
 from app.schemas import JobCreate, JobFinish, LoginRequest, MemberCreate, ProjectCreate, UserCreate
 from app.service import ResearchService, ServiceError
 
@@ -17,7 +19,7 @@ async def lifespan(app: FastAPI):
     close_connection()
 
 
-app = FastAPI(title="考古研究协作基础服务", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="考古年代证据服务", version="1.1.0", lifespan=lifespan)
 
 
 @app.exception_handler(ServiceError)
@@ -25,6 +27,16 @@ async def handle_service_error(request, exc: ServiceError):
     del request
     from fastapi.responses import JSONResponse
     return JSONResponse(status_code=exc.status, content={"error": {"code": exc.code, "message": exc.message}})
+
+
+@app.exception_handler(DatingError)
+async def handle_dating_error(request, exc: DatingError):
+    del request
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=exc.status, content={"error": {"code": exc.code, "message": exc.message}})
+
+
+app.include_router(dating_router)
 
 
 def current_user(authorization: str = Header(...)):
@@ -35,7 +47,7 @@ def current_user(authorization: str = Header(...)):
 
 @app.get("/")
 def root():
-    return {"service": "考古研究协作基础服务", "version": "1.0.0"}
+    return {"service": "考古年代证据服务", "version": "1.1.0", "modules": ["foundation", "dating"]}
 
 
 @app.get("/api/system/health")
