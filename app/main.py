@@ -33,6 +33,20 @@ def current_user(authorization: str = Header(...)):
     return ResearchService().authenticate(authorization[7:])
 
 
+from app.chrono.router import router as chrono_router  # noqa: E402  必须在 current_user 之后导入
+from app.chrono.service import ChronoError  # noqa: E402
+
+
+@app.exception_handler(ChronoError)
+async def handle_chrono_error(request, exc: ChronoError):
+    del request
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=exc.status, content={"error": {"code": exc.code, "message": exc.message}})
+
+
+app.include_router(chrono_router)
+
+
 @app.get("/")
 def root():
     return {"service": "考古研究协作基础服务", "version": "1.0.0"}

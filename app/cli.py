@@ -25,7 +25,11 @@ def main() -> int:
     with TestClient(app) as client:
         root = client.get("/")
         health = client.get("/api/system/health")
-        print(json.dumps({"root": root.json(), "health": health.json(), "status_codes": [root.status_code, health.status_code]}, ensure_ascii=False))
+        chrono_tables = connection().execute(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN "
+            "('dating_samples','seal_events','pretreatment_records','measurements','calibration_jobs','publications','phase_sets','phase_versions','phase_members')"
+        ).fetchone()[0]
+        print(json.dumps({"root": root.json(), "health": health.json(), "chrono_tables": chrono_tables, "status_codes": [root.status_code, health.status_code]}, ensure_ascii=False))
     return 0
 
 
